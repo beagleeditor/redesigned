@@ -15,6 +15,9 @@ import WelcomeScreen from "./components/WelcomeScreen";
 import "./App.css";
 import SearchView from "./components/SearchView";
 import { searchAPI } from "./lib/search";
+import { Store } from "@tauri-apps/plugin-store";
+
+const store = await Store.load("layout.json");
 
 function detectLanguage(filename: string): string {
   const ext = filename.split(".").pop()?.toLowerCase();
@@ -135,6 +138,11 @@ export default function App() {
   const [sidebarView, setSidebarView] = useState<SidebarView>("files");
   const [sidebarVisible, setSidebarVisible] = useState(true);
 
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const resizingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(0);
+
   /* ---------------- FILE SYSTEM ---------------- */
 
   const [workspaceDir, setWorkspaceDir] = useState<string | null>(null);
@@ -245,19 +253,13 @@ export default function App() {
     setWorkspaceDir(dir);
     setShowWelcome(false);
 
-    // 🔥 IMPORTANT: build ROOT node properly
     const entries = await fsAPI.readDir(dir);
 
     const tree: FileNode = {
       name: dir.split(/[/\\]/).pop() ?? "root",
       path: dir,
       is_dir: true,
-      children: entries.map((e: any) => ({
-        name: e.name,
-        path: `${dir}/${e.name}`,
-        is_dir: e.children !== undefined,
-        children: e.children,
-      })),
+      children: entries, // 🔥 direct pass-through
     };
 
     setFileTree(tree);
@@ -346,6 +348,15 @@ export default function App() {
     };
   }, [openFile, saveFile]);
 
+  useEffect(() => {
+    const load = async () => {
+      const saved = await store.get<number>("sidebarWidth");
+      if (saved) setSidebarWidth(saved);
+    };
+
+    load();
+  }, []);
+
   const searchableFiles = fileTree ? flattenTree(fileTree) : [];
 
   const openQuickOpen = async (query: string) => {
@@ -363,6 +374,39 @@ export default function App() {
   };
 
   const editorRef = useRef<any>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const sidebarWidthRef = useRef(sidebarWidth);
+
+  useEffect(() => {
+    sidebarWidthRef.current = sidebarWidth;
+  }, [sidebarWidth]);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!resizingRef.current) return;
+
+      const delta = e.clientX - startXRef.current;
+
+      const newWidth = startWidthRef.current + delta;
+
+      setSidebarWidth(Math.max(180, Math.min(500, newWidth)));
+    };
+    
+    const onUp = async () => {
+      resizingRef.current = false;
+
+      await store.set("sidebarWidth", sidebarWidthRef.current);
+      await store.save();
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
 
   /* -------------------------------------------------------
      RENDER
@@ -374,25 +418,38 @@ export default function App() {
         <ActivityBar active={sidebarView} onSelect={setSidebarView} />
 
         {sidebarVisible && (
-          <aside className="sidebar">
-            {sidebarView === "files" && (
-              <Explorer tree={fileTree} onOpenFile={openFileFromExplorer} />
-            )}
+          <div className="sidebar-container">
+            <div
+              className="sidebar"
+              ref={sidebarRef}
+              style={{ width: sidebarWidth }}
+            >
+              {sidebarView === "files" && (
+                <Explorer tree={fileTree} onOpenFile={openFileFromExplorer} />
+              )}
 
-            {sidebarView === "search" && (
-              <SearchView
-                root={workspaceDir}
-                search={search}
-                onOpenFile={openFileFromExplorer}
-              />
-            )}
+              {sidebarView === "search" && (
+                <SearchView
+                  root={workspaceDir}
+                  search={search}
+                  onOpenFile={openFileFromExplorer}
+                />
+              )}
 
-            {sidebarView === "git" && <div className="sidebar-panel">Git</div>}
-
-            {sidebarView === "settings" && (
-              <div className="sidebar-panel">Settings</div>
-            )}
-          </aside>
+              {sidebarView === "git" && <div>Git UI</div>}
+              {sidebarView === "settings" && <div>Settings UI</div>}
+            </div>
+            <div
+              className="resizer"
+              onMouseDown={(e) => {
+                resizingRef.current = true;
+                startXRef.current = e.clientX;
+                startWidthRef.current = sidebarWidth;
+                const newWidth =
+                  startWidthRef.current + (e.clientX - startXRef.current);
+              }}
+            />
+          </div>
         )}
 
         <main className="main">

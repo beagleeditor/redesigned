@@ -32,8 +32,7 @@ fn normalize_path(path: &str) -> PathBuf {
 pub fn read_dir(path: String) -> Result<Vec<FileNode>, String> {
     let path = normalize_path(&path);
 
-    let entries = fs::read_dir(&path)
-        .map_err(|e| format!("Failed to read dir: {}", e))?;
+    let entries = fs::read_dir(&path).map_err(|e| format!("Failed to read dir: {}", e))?;
 
     let mut result: Vec<FileNode> = Vec::new();
 

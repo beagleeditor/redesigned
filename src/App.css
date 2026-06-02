@@ -534,3 +534,37 @@ body {
   font-size: 12px;
   opacity: 0.6;
 }
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.workspace {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  flex-shrink: 0;
+  border-right: 1px solid #333;
+}
+
+.sidebar-container {
+  display: flex;
+  height: 100%;
+}
+
+.resizer {
+  width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  height: 100%;
+}
+
+.resizer:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
