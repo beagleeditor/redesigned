@@ -1,0 +1,30 @@
+import { invoke } from "@tauri-apps/api/core";
+
+/* -------------------------------------------------------
+   FILE SYSTEM API (React side)
+------------------------------------------------------- */
+
+export type FileNode = {
+  name: string;
+  path: string;
+  is_dir: boolean;
+};
+
+export const fsAPI = {
+  // Read one folder (lazy explorer)
+  readDir: (path: string): Promise<FileNode[]> => invoke("read_dir", { path }),
+
+  // Read file content
+  readFile: (path: string): Promise<string> => invoke("read_file", { path }),
+
+  // Write file content
+  writeFile: (path: string, content: string): Promise<void> =>
+    invoke("write_file", { path, content }),
+
+  // Check if path exists
+  exists: (path: string): Promise<boolean> => invoke("path_exists", { path }),
+
+  // Optional: workspace root info
+  readWorkspace: (path: string): Promise<FileNode> =>
+    invoke("read_workspace", { path }),
+};
