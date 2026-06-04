@@ -1,10 +1,15 @@
 import type { Settings } from "../lib/settings";
-import { setSettings } from "../lib/settingsStore";
 import { useSettings } from "../lib/useSettings";
 
-export default function SettingsPage() {
-  const { settings, update } = useSettings();
+type Props = {
+  settings: Settings;
+  update: <K extends keyof Settings>(
+    key: K,
+    value: Settings[K],
+  ) => void;
+};
 
+export default function SettingsPage({ settings, update }: Props) {
   if (!settings) {
     return <div className="settings-title">LOADING SETTINGS...</div>;
   }
@@ -14,8 +19,6 @@ export default function SettingsPage() {
       <div className="search-title">SETTINGS</div>
 
       <div className="settings-content">
-        <p><strong>NOTE:&nbsp;</strong>You need to reopen the app in order to apply settings</p>
-
         {/* THEME */}
         <div className="setting-item">
           <label>Theme</label>
@@ -37,9 +40,7 @@ export default function SettingsPage() {
           <input
             type="number"
             value={settings.fontSize}
-            onChange={(e) =>
-              update("fontSize", Number(e.target.value))
-            }
+            onChange={(e) => update("fontSize", Number(e.target.value))}
           />
         </div>
 
@@ -49,9 +50,7 @@ export default function SettingsPage() {
           <input
             type="number"
             value={settings.tabSize}
-            onChange={(e) =>
-              update("tabSize", Number(e.target.value))
-            }
+            onChange={(e) => update("tabSize", Number(e.target.value))}
           />
         </div>
 
@@ -61,9 +60,7 @@ export default function SettingsPage() {
           <input
             type="checkbox"
             checked={settings.wordWrap}
-            onChange={(e) =>
-              update("wordWrap", e.target.checked)
-            }
+            onChange={(e) => update("wordWrap", e.target.checked)}
           />
         </div>
 
@@ -73,12 +70,9 @@ export default function SettingsPage() {
           <input
             type="checkbox"
             checked={settings.minimap}
-            onChange={(e) =>
-              update("minimap", e.target.checked)
-            }
+            onChange={(e) => update("minimap", e.target.checked)}
           />
         </div>
-
       </div>
     </div>
   );

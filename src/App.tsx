@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import * as monaco from 'monaco-editor';
+import * as monaco from "monaco-editor";
 import { Editor, loader } from "@monaco-editor/react";
 
 import { listen } from "@tauri-apps/api/event";
@@ -266,6 +266,19 @@ export default function App() {
     );
   };
 
+  useEffect(() => {
+    if (!editorRef.current || !settings) return;
+
+    editorRef.current.updateOptions({
+      fontSize: settings.fontSize,
+      tabSize: settings.tabSize,
+      wordWrap: settings.wordWrap ? "on" : "off",
+      minimap: {
+        enabled: settings.minimap,
+      },
+    });
+  }, [settings]);
+
   /* =======================================================
      MENU EVENTS
   ======================================================= */
@@ -340,7 +353,7 @@ export default function App() {
 
               {sidebarView === "git" && <SourceControl></SourceControl>}
 
-              {sidebarView === "settings" && <SettingsPage />}
+              {sidebarView === "settings" && <SettingsPage settings={settings} update={update} />}
             </div>
 
             <div

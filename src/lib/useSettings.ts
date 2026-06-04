@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import type { Settings } from "./settings";
+import { defaultSettings, type Settings } from "./settings";
 import { getSettings, setSettings } from "./settingsStore";
 
 export function useSettings() {
-  const [settings, setSettingsState] = useState<Settings | null>(null);
+  const [settings, setSettingsState] = useState<Settings>(defaultSettings);
 
   // load once
   useEffect(() => {

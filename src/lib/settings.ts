@@ -11,7 +11,7 @@ export const defaultSettings: Settings = {
   theme: "dark",
   sidebarWidth: 280,
   fontSize: 14,
-  tabSize: 2,
+  tabSize: 4,
   wordWrap: true,
   minimap: false,
 };
