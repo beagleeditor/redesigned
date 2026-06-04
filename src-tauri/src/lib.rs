@@ -24,11 +24,14 @@ pub fn run() {
 
             // APP INFO MENU (works everywhere, macOS just relocates it visually)
             let about = MenuItem::with_id(app, "about", "About BeagleEditor", true, None::<&str>)?;
-            let settings = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
+
+            let settings = MenuItem::with_id(app, "settings", "Settings", true, Some("CmdOrCtrl+,"))?;
 
             let app_menu = Submenu::with_items(app, "BeagleEditor", true, &[&about, &settings])?;
 
-            let menu = Menu::with_items(app, &[&app_menu, &file_menu])?;
+            let help_menu = Submenu::with_items(app, "Help", true, &[&about])?;
+
+            let menu = Menu::with_items(app, &[&app_menu, &file_menu, &help_menu])?;
 
             app.set_menu(menu)?;
 
@@ -53,7 +56,7 @@ pub fn run() {
             "settings" => {
                 println!("EMIT SETTINGS");
                 let _ = app.emit("menu-settings", ());
-            }
+            },
             _ => {}
         })
         .plugin(tauri_plugin_dialog::init())

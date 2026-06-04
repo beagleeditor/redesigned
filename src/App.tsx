@@ -21,6 +21,7 @@ import { searchAPI } from "./lib/search";
 import "./App.css";
 import { useSettings } from "./lib/useSettings";
 import SourceControl from "./components/SourceControl";
+import About from "./components/About";
 
 /* ---------------- TYPES ---------------- */
 
@@ -78,7 +79,11 @@ function detectLanguage(filename: string): string {
     case "cpp":
     case "cc":
     case "cxx":
+    case "hpp":
       return "cpp";
+    case "c":
+    case "h":
+      return "c";
     case "java":
       return "java";
     default:
@@ -105,6 +110,8 @@ export default function App() {
   const startWidth = useRef(0);
 
   const editorRef = useRef<any>(null);
+
+  const [showAbout, setShowAbout] = useState(false);
 
   const { settings, update } = useSettings();
 
@@ -266,6 +273,18 @@ export default function App() {
     );
   };
 
+  const openSettings = () => {
+    setSidebarView("settings");
+  };
+
+  const openAbout = () => {
+    if (showAbout === false) {
+      setShowAbout(true);
+    } else {
+      setShowAbout(false);
+    }
+  };
+
   useEffect(() => {
     if (!editorRef.current || !settings) return;
 
@@ -286,17 +305,23 @@ export default function App() {
   useEffect(() => {
     let u1: any;
     let u2: any;
+    let u3: any;
+    let u4: any;
 
     (async () => {
       u1 = await listen("menu-open", openFile);
       u2 = await listen("menu-save", saveFile);
+      u3 = await listen("menu-settings", openSettings);
+      u4 = await listen("menu-about", openAbout);
     })();
 
     return () => {
       u1?.();
       u2?.();
+      u3?.();
+      u4?.();
     };
-  }, [openFile, saveFile]);
+  }, [openFile, saveFile, openSettings, openAbout]);
 
   /* =======================================================
      SIDEBAR RESIZE
@@ -353,7 +378,9 @@ export default function App() {
 
               {sidebarView === "git" && <SourceControl></SourceControl>}
 
-              {sidebarView === "settings" && <SettingsPage settings={settings} update={update} />}
+              {sidebarView === "settings" && (
+                <SettingsPage settings={settings} update={update} />
+              )}
             </div>
 
             <div
@@ -376,7 +403,9 @@ export default function App() {
             onClose={(id) => setTabs((prev) => prev.filter((t) => t.id !== id))}
           />
 
-          {showWelcome || tabs.length === 0 ? (
+          {showAbout ? (
+            <About onBack={() => setShowAbout(false)} />
+          ) : showWelcome || tabs.length === 0 ? (
             <WelcomeScreen
               onOpen={openFile}
               onNewFile={newFile}
