@@ -2,8 +2,7 @@ pub mod fs;
 pub mod search;
 
 use tauri::{
-    menu::{Menu, MenuItem, Submenu},
-    Emitter,
+    Emitter, menu::{Menu, MenuItem, Submenu}
 };
 
 use fs::{path_exists, read_dir, read_file, read_workspace, write_file};
@@ -25,7 +24,8 @@ pub fn run() {
             // APP INFO MENU (works everywhere, macOS just relocates it visually)
             let about = MenuItem::with_id(app, "about", "About BeagleEditor", true, None::<&str>)?;
 
-            let settings = MenuItem::with_id(app, "settings", "Settings", true, Some("CmdOrCtrl+,"))?;
+            let settings =
+                MenuItem::with_id(app, "settings", "Settings", true, Some("CmdOrCtrl+,"))?;
 
             let app_menu = Submenu::with_items(app, "BeagleEditor", true, &[&about, &settings])?;
 
@@ -56,7 +56,7 @@ pub fn run() {
             "settings" => {
                 println!("EMIT SETTINGS");
                 let _ = app.emit("menu-settings", ());
-            },
+            }
             _ => {}
         })
         .plugin(tauri_plugin_dialog::init())

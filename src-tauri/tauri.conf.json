@@ -14,7 +14,9 @@
       {
         "title": "BeagleEditor",
         "width": 950,
-        "height": 800
+        "height": 800,
+        "resizable": true,
+        "titleBarStyle": "Overlay"
       }
     ],
     "security": {

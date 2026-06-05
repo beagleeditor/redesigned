@@ -15,6 +15,7 @@ import StatusBar from "./components/StatusBar";
 import WelcomeScreen from "./components/WelcomeScreen";
 import SearchView from "./components/SearchView";
 import SettingsPage from "./components/Settings";
+import TitleBar from "./components/Titlebar";
 
 import { searchAPI } from "./lib/search";
 
@@ -26,7 +27,7 @@ import About from "./components/About";
 /* ---------------- TYPES ---------------- */
 
 type SidebarView = "files" | "search" | "git" | "settings";
-type Theme = "dark" | "light" | "system";
+export type Theme = "dark" | "light" | "system";
 
 loader.config({ monaco });
 
@@ -49,6 +50,19 @@ type Tab = {
 /* ---------------- STORE ---------------- */
 
 const storePromise = Store.load("settings.json");
+
+/* ---------------- THEME ---------------- */
+
+const getSystemTheme = (): "dark" | "light" => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+function resolveTheme(theme: "dark" | "light" | "system") {
+  if (theme === "system") return getSystemTheme();
+  return theme;
+}
 
 /* ---------------- LANGUAGE DETECTOR ---------------- */
 
@@ -131,6 +145,8 @@ export default function App() {
     store.set("sidebarWidth", sidebarWidth);
     store.save();
   }, [sidebarWidth, store]);
+
+  const theme = resolveTheme(settings.theme);
 
   /* ---------------- FILE SYSTEM ---------------- */
 
@@ -353,96 +369,160 @@ export default function App() {
   ======================================================= */
 
   return (
-    <div className={`app theme-${settings?.theme}`}>
-      <div className="workspace">
-        <ActivityBar active={sidebarView} onSelect={setSidebarView} />
+    <div className="app-shell">
+      <TitleBar theme={theme} />
+      <div className={`app theme-${theme}`}>
+        <div className="workspace">
+          <ActivityBar active={sidebarView} onSelect={setSidebarView} />
 
-        {sidebarVisible && (
-          <div className="sidebar-container">
-            <div className="sidebar" style={{ width: sidebarWidth }}>
-              {sidebarView === "files" && (
-                <Explorer tree={fileTree} onOpenFile={openFileFromExplorer} />
-              )}
+          {sidebarVisible && (
+            <div className="sidebar-container">
+              <div className="sidebar" style={{ width: sidebarWidth }}>
+                {sidebarView === "files" && (
+                  <Explorer tree={fileTree} onOpenFile={openFileFromExplorer} />
+                )}
 
-              {sidebarView === "search" && (
-                <SearchView
-                  root={workspaceDir}
-                  search={(q) =>
-                    workspaceDir
-                      ? searchAPI.searchWorkspace(workspaceDir, q)
-                      : Promise.resolve([])
-                  }
-                  onOpenFile={openFileFromExplorer}
-                />
-              )}
+                {sidebarView === "search" && (
+                  <SearchView
+                    root={workspaceDir}
+                    search={(q) =>
+                      workspaceDir
+                        ? searchAPI.searchWorkspace(workspaceDir, q)
+                        : Promise.resolve([])
+                    }
+                    onOpenFile={openFileFromExplorer}
+                  />
+                )}
 
-              {sidebarView === "git" && <SourceControl></SourceControl>}
+                {sidebarView === "git" && <SourceControl></SourceControl>}
 
-              {sidebarView === "settings" && (
-                <SettingsPage settings={settings} update={update} />
-              )}
+                {sidebarView === "settings" && (
+                  <SettingsPage settings={settings} update={update} />
+                )}
+              </div>
+
+              <div
+                className="resizer"
+                onMouseDown={(e) => {
+                  resizingRef.current = true;
+                  startX.current = e.clientX;
+                  startWidth.current = sidebarWidth;
+                }}
+              />
             </div>
-
-            <div
-              className="resizer"
-              onMouseDown={(e) => {
-                resizingRef.current = true;
-                startX.current = e.clientX;
-                startWidth.current = sidebarWidth;
-              }}
-            />
-          </div>
-        )}
-
-        <main className="main">
-          <EditorTabs
-            tabs={tabs}
-            activeTabId={activeTabId}
-            onSelect={setActiveTabId}
-            onNewTab={newFile}
-            onClose={(id) => setTabs((prev) => prev.filter((t) => t.id !== id))}
-          />
-
-          {showAbout ? (
-            <About onBack={() => setShowAbout(false)} />
-          ) : showWelcome || tabs.length === 0 ? (
-            <WelcomeScreen
-              onOpen={openFile}
-              onNewFile={newFile}
-              onOpenFolder={openFolder}
-            />
-          ) : (
-            <Editor
-              key={`${settings?.theme}-${settings?.fontSize}`}
-              language={activeTab?.language ?? "plaintext"}
-              value={activeTab?.content ?? ""}
-              onChange={updateContent}
-              theme={settings?.theme === "dark" ? "vs-dark" : "vs"}
-              options={{
-                automaticLayout: true,
-                minimap: {
-                  enabled: settings?.minimap ?? false,
-                },
-                scrollBeyondLastLine: false,
-                tabCompletion: "on",
-                quickSuggestions: true,
-                contextmenu: true,
-                copyWithSyntaxHighlighting: true,
-                fontSize: Math.max(10, settings?.fontSize ?? 14),
-                tabSize: settings?.tabSize ?? 2,
-                wordWrap: settings?.wordWrap ? "on" : "off",
-              }}
-            />
           )}
-        </main>
-      </div>
 
-      <StatusBar
-        language={activeTab?.language ?? "plaintext"}
-        lineEnding="LF"
-        encoding="UTF-8"
-        onLanguageChange={changeLanguage}
-      />
+          <main className="main">
+            <EditorTabs
+              tabs={tabs}
+              activeTabId={activeTabId}
+              onSelect={setActiveTabId}
+              onNewTab={newFile}
+              onClose={(id) =>
+                setTabs((prev) => prev.filter((t) => t.id !== id))
+              }
+            />
+
+            {showAbout ? (
+              <About onBack={() => setShowAbout(false)} />
+            ) : showWelcome || tabs.length === 0 ? (
+              <WelcomeScreen
+                onOpen={openFile}
+                onNewFile={newFile}
+                onOpenFolder={openFolder}
+              />
+            ) : (
+              <Editor
+                key={`${settings?.theme}-${settings?.fontSize}`}
+                language={activeTab?.language ?? "plaintext"}
+                value={activeTab?.content ?? ""}
+                onChange={updateContent}
+                onMount={(editor, monaco) => {
+                  editorRef.current = editor;
+
+                  const KM = monaco.KeyMod;
+                  const KC = monaco.KeyCode;
+
+                  // -------------------------
+                  // COPY (Ctrl/Cmd + C)
+                  // -------------------------
+                  editor.addCommand(KM.CtrlCmd | KC.KeyC, async () => {
+                    const selection =
+                      editor.getSelection() ||
+                      editor.getModel()?.getFullModelRange();
+                    const model = editor.getModel();
+
+                    if (!selection || !model) return;
+
+                    const text = model.getValueInRange(selection);
+
+                    await navigator.clipboard.writeText(text);
+                  });
+
+                  // -------------------------
+                  // PASTE (Ctrl/Cmd + V)
+                  // -------------------------
+                  editor.addCommand(KM.CtrlCmd | KC.KeyV, async () => {
+                    const text = await navigator.clipboard.readText();
+
+                    editor.executeEdits("clipboard", [
+                      {
+                        range: editor.getSelection()!,
+                        text,
+                        forceMoveMarkers: true,
+                      },
+                    ]);
+                  });
+
+                  // -------------------------
+                  // CUT (Ctrl/Cmd + X)
+                  // -------------------------
+                  editor.addCommand(KM.CtrlCmd | KC.KeyX, async () => {
+                    const selection = editor.getSelection();
+                    const model = editor.getModel();
+
+                    if (!selection || !model) return;
+
+                    const text = model.getValueInRange(selection);
+
+                    await navigator.clipboard.writeText(text);
+
+                    editor.executeEdits("cut", [
+                      {
+                        range: selection,
+                        text: "",
+                        forceMoveMarkers: true,
+                      },
+                    ]);
+                  });
+                }}
+                theme={theme === "dark" ? "vs-dark" : "vs"}
+                options={{
+                  automaticLayout: true,
+                  minimap: {
+                    enabled: settings?.minimap ?? false,
+                  },
+                  scrollBeyondLastLine: false,
+                  tabCompletion: "on",
+                  quickSuggestions: true,
+                  contextmenu: true,
+                  copyWithSyntaxHighlighting: true,
+                  fontSize: Math.max(10, settings?.fontSize ?? 14),
+                  tabSize: settings?.tabSize ?? 2,
+                  wordWrap: settings?.wordWrap ? "on" : "off",
+                }}
+              />
+            )}
+          </main>
+        </div>
+
+        <StatusBar
+          language={activeTab?.language ?? "plaintext"}
+          lineEnding="LF"
+          encoding="UTF-8"
+          onLanguageChange={changeLanguage}
+        />
+      </div>
     </div>
   );
 }

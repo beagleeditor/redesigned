@@ -1,12 +1,4 @@
-:root {
-  --bg: #ffffff;
-  --surface: #f5f5f5;
-  --surface-hover: #ebebeb;
-  --border: #dcdcdc;
-  --text: #111111;
-  --muted: #666666;
-  --accent: #4f7cff;
-
+body {
   font-family:
     Inter,
     system-ui,
@@ -56,9 +48,22 @@ html {
 html,
 body,
 #root {
-  margin: 0;
   width: 100%;
   height: 100%;
+  margin: 0;
+}
+
+.app-shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 body {
@@ -68,8 +73,9 @@ body {
 }
 
 .app {
-  height: 100vh;
   display: flex;
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   background: var(--bg);
 }
@@ -151,6 +157,7 @@ body {
   grid-template-rows: 48px 1fr;
 
   min-width: 0;
+  min-height: 0;
 
   border-radius: 16px;
   border: 1px solid var(--border);
@@ -244,6 +251,8 @@ body {
   color: var(--muted);
 
   font-size: 13px;
+
+  flex-shrink: 0;
 }
 
 .activity-btn.active {
@@ -556,18 +565,21 @@ body {
 }
 
 .workspace {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  height: 100vh;
 }
 
 .sidebar {
   flex-shrink: 0;
+  min-height: 0;
   border-right: 1px solid var(--border);
 }
 
 .sidebar-container {
   display: flex;
   height: 100%;
+  min-height: 0;
 }
 
 .resizer {
@@ -581,7 +593,7 @@ body {
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* =========================
+/* ========================= 
    SETTINGS PANEL
 ========================= */
 
@@ -690,4 +702,235 @@ body {
 
 .settings-content::-webkit-scrollbar-thumb:hover {
   background: var(--surface-hover);
+}
+
+.titlebar {
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 12px 0 80px; /* leave room for macOS traffic lights */
+
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+
+  -webkit-app-region: drag;
+}
+
+.titlebar button,
+.titlebar input,
+.titlebar select {
+  -webkit-app-region: no-drag;
+}
+
+.app-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.menus button {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.menus button:hover {
+  background: var(--surface-hover);
+}
+
+/* =========================
+   TITLE BAR
+========================= */
+
+.titlebar {
+  position: relative;
+
+  height: 36px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 12px 0 80px; /* room for macOS traffic lights */
+
+  border-bottom: 1px solid var(--border);
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+}
+
+.titlebar.theme-dark {
+  background: #101010;
+}
+
+.titlebar.theme-light {
+  background: #ffffff;
+}
+
+.titlebar-left,
+.titlebar-center,
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titlebar-center {
+  flex: 1;
+  justify-content: center;
+}
+
+.titlebar button,
+.titlebar input,
+.titlebar select {
+  -webkit-app-region: no-drag;
+}
+
+/* =========================
+   MENUS
+========================= */
+
+.titlebar-menu {
+  background: transparent;
+  border: none;
+
+  color: var(--text);
+
+  height: 28px;
+  padding: 0 10px;
+
+  border-radius: 6px;
+
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.titlebar-menu:hover {
+  background: var(--surface-hover);
+}
+
+/* =========================
+   SEARCH BOX
+========================= */
+
+.titlebar-search {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 420px;
+  height: 28px;
+
+  padding: 0 12px;
+
+  border-radius: 8px;
+  outline: none;
+
+  -webkit-app-region: no-drag;
+
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.titlebar-search:focus {
+  border-color: var(--accent);
+}
+
+/* =========================
+   APP TITLE
+========================= */
+
+.titlebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+
+  white-space: nowrap;
+}
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+
+.titlebar-action {
+  width: 28px;
+  height: 28px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+  color: var(--muted);
+
+  cursor: pointer;
+}
+
+.titlebar-action:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.theme-dark,
+.theme-light {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  z-index: 1;
+}
+
+.menu-bar button {
+  height: 26px;
+
+  padding: 0 8px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: transparent;
+  color: var(--text);
+
+  cursor: pointer;
+
+  -webkit-app-region: no-drag;
+}
+
+.menu-bar button:hover {
+  background: var(--surface-hover);
+}
+
+.titlebar.theme-dark .titlebar-search {
+  background: #181818;
+  color: #e8e8e8;
+  border: 1px solid #2b2b2b;
+}
+
+.titlebar.theme-dark .titlebar-search::placeholder {
+  color: #8a8a8a;
+}
+
+.titlebar.theme-light .titlebar-search {
+  background: #f8f8f8;
+  color: #111111;
+  border: 1px solid #dcdcdc;
+}
+
+.titlebar.theme-light .titlebar-search::placeholder {
+  color: #666666;
+}
+.titlebar-search:focus {
+  border-color: var(--accent);
 }
