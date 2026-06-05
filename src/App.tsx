@@ -7,6 +7,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { fsAPI } from "./lib/fs";
 import { homeDir } from "@tauri-apps/api/path";
 import { Store } from "@tauri-apps/plugin-store";
+import { Icon } from "@iconify/react";
 
 import ActivityBar from "./components/ActivityBar";
 import Explorer from "./components/Explorer";

@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { fsAPI, FileNode } from "../lib/fs";
-
-import {
-  Folder,
-  FolderOpen,
-  File,
-  FileText,
-  Code,
-  FileJson,
-  Image,
-} from "lucide-react";
+import { Icon } from "@iconify/react";
 
 /* -------------------------------------------------------
    TYPES
@@ -21,36 +12,57 @@ type Props = {
 };
 
 /* -------------------------------------------------------
-   ICON RESOLVER (stable + safe)
+   ICON RESOLVER 
+   We are currently relying or VS Code Icons. We will have
+   our own icons in future.
 ------------------------------------------------------- */
 
-function getIcon(name: string, isDir: boolean) {
-  if (isDir) return isDir ? Folder : Folder;
+function FileIcon({ name, isDir }: { name: string; isDir: boolean }) {
+  if (isDir) {
+    return <Icon icon="vscode-icons:default-folder" width="16" height="16" />;
+  }
 
   const ext = name.split(".").pop()?.toLowerCase();
 
   switch (ext) {
+    case "rs":
+      return <Icon icon="vscode-icons:file-type-rust" width="16" />;
+
+    case "py":
+      return <Icon icon="vscode-icons:file-type-python" width="16" />;
+
     case "ts":
+      return <Icon icon="vscode-icons:file-type-typescript-official" width="16" />;
+
     case "tsx":
+      return <Icon icon="vscode-icons:file-type-reactts" width="16" />;
+
     case "js":
+      return <Icon icon="vscode-icons:file-type-js-official" width="16" />;
+
     case "jsx":
-      return Code;
+      return <Icon icon="vscode-icons:file-type-reactjs" width="16" />;
 
     case "json":
-      return FileJson;
+      return <Icon icon="vscode-icons:file-type-json" width="16" />;
 
     case "md":
-    case "txt":
-      return FileText;
+      return <Icon icon="vscode-icons:file-type-markdown" width="16" />;
+
+    case "html":
+      return <Icon icon="vscode-icons:file-type-html" width="16" />;
+
+    case "css":
+      return <Icon icon="vscode-icons:file-type-css" width="16" />;
 
     case "png":
     case "jpg":
     case "jpeg":
     case "svg":
-      return Image;
+      return <Icon icon="vscode-icons:file-type-image" width="16" />;
 
     default:
-      return File;
+      return <Icon icon="vscode-icons:default-file" width="16" />;
   }
 }
 
@@ -84,7 +96,7 @@ function TreeNode({
   node,
   depth,
   onOpenFile,
-  defaultOpen = false
+  defaultOpen = false,
 }: {
   node: FileNode;
   depth: number;
@@ -97,8 +109,6 @@ function TreeNode({
 
   // 🔥 normalize BOTH naming styles (fixes Tauri mismatch bugs)
   const isDir = (node as any).is_dir ?? (node as any).isDir;
-
-  const Icon = getIcon(node.name, isDir);
 
   /* -----------------------------------------------------
      CLICK HANDLER
@@ -138,15 +148,13 @@ function TreeNode({
   ----------------------------------------------------- */
 
   if (!isDir) {
-    const FileIcon = Icon;
-
     return (
       <div
         className="file-item"
         style={{ paddingLeft: depth * 14 }}
         onClick={handleClick}
       >
-        <FileIcon size={16} />
+        <FileIcon name={node.name} isDir={false} />
         <span>{node.name}</span>
       </div>
     );
@@ -156,8 +164,6 @@ function TreeNode({
      FOLDER NODE
   ----------------------------------------------------- */
 
-  const FolderIcon = open ? FolderOpen : Folder;
-
   return (
     <div>
       <div
@@ -165,7 +171,14 @@ function TreeNode({
         style={{ paddingLeft: depth * 14 }}
         onClick={handleClick}
       >
-        <FolderIcon size={16} />
+        <Icon
+          icon={
+            open
+              ? "vscode-icons:default-folder-opened"
+              : "vscode-icons:default-folder"
+          }
+          width="16"
+        />
         <span>{node.name}</span>
 
         {loading && (
