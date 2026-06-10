@@ -21,6 +21,14 @@ export const fsAPI = {
   writeFile: (path: string, content: string): Promise<void> =>
     invoke("write_file", { path, content }),
 
+  // Create empty file
+  createFile: (path: string): Promise<void> =>
+    invoke("create_file", { path }),
+
+  // Create directory (including nested directories)
+  createDir: (path: string): Promise<void> =>
+    invoke("create_dir", { path }),
+
   // Check if path exists
   exists: (path: string): Promise<boolean> => invoke("path_exists", { path }),
 

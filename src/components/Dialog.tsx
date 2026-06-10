@@ -1,6 +1,8 @@
+import { ReactNode, useEffect } from "react";
+
 type DialogProps = {
   title: string;
-  message: string;
+  message: string | ReactNode;
 
   confirmText?: string;
   cancelText?: string;
@@ -17,13 +19,20 @@ export default function Dialog({
   onConfirm,
   onCancel,
 }: DialogProps) {
+  useEffect(() => {
+    console.log("Dialog mounted");
+  }, []);
   console.log("I'm dialog. I'm called now")
   return (
     <div className="dialog-backdrop">
       <div className="dialog">
         <h3>{title}</h3>
 
-        <p>{message}</p>
+        {typeof message === "string" ? (
+          <p>{message}</p>
+        ) : (
+          message
+        )}
 
         <div className="dialog-actions">
           <button onClick={onCancel}>{cancelText}</button>

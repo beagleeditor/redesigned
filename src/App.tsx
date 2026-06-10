@@ -7,7 +7,6 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { fsAPI } from "./lib/fs";
 import { homeDir } from "@tauri-apps/api/path";
 import { Store } from "@tauri-apps/plugin-store";
-import { Icon } from "@iconify/react";
 
 import ActivityBar from "./components/ActivityBar";
 import Explorer from "./components/Explorer";
@@ -259,6 +258,19 @@ export default function App() {
     );
   }, [activeTab]);
 
+  const reloadWorkspace = async () => {
+    if (!workspaceDir) return;
+
+    const entries = await fsAPI.readDir(workspaceDir);
+
+    setFileTree({
+      name: workspaceDir.split(/[/\\]/).pop() ?? "root",
+      path: workspaceDir,
+      is_dir: true,
+      children: entries,
+    });
+  };
+
   const openFolder = async () => {
     const dir = await open({ directory: true });
 
@@ -410,6 +422,50 @@ export default function App() {
      RENDER
   ======================================================= */
 
+  // --- Create Dialog State ---
+  const [createType, setCreateType] = useState<"file" | "folder" | null>(null);
+  const [createPath, setCreatePath] = useState("");
+  const [renameTarget, setRenameTarget] = useState<string | null>(null);
+  const [renamePath, setRenamePath] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // --- Create Item Handler ---
+  const createItem = async () => {
+    if (!workspaceDir || !createType || !createPath.trim()) return;
+
+    const fullPath = `${workspaceDir}/${createPath}`;
+
+    if (createType === "file") {
+      await fsAPI.createFile(fullPath);
+    } else {
+      await fsAPI.createDir(fullPath);
+    }
+
+    setCreateType(null);
+    setCreatePath("");
+
+    await reloadWorkspace();
+
+    setTimeout(() => {
+      reloadWorkspace();
+    }, 100);
+  };
+
+  const renameItem = async () => {
+    console.log("Rename requested:", renameTarget, "->", renamePath);
+    setRenameTarget(null);
+    setRenamePath("");
+  };
+
+  const deleteItem = async () => {
+    console.error(
+      "Delete is not implemented yet. Add a delete command to fsAPI and the Tauri backend.",
+      deleteTarget,
+    );
+
+    setDeleteTarget(null);
+  };
+
   return (
     <div className="app-shell">
       {quickOpenVisible && (
@@ -442,7 +498,31 @@ export default function App() {
             <div className="sidebar-container">
               <div className="sidebar" style={{ width: sidebarWidth }}>
                 {sidebarView === "files" && (
-                  <Explorer tree={fileTree} onOpenFile={openFileFromExplorer} />
+                  <Explorer
+                    tree={fileTree}
+                    onOpenFile={openFileFromExplorer}
+                    onReload={reloadWorkspace}
+                    // Keep compatibility with Explorer prop types
+                    onNewFile={(_path: string) => {}}
+                    onNewFolder={(_path: string) => {}}
+                    showCreateDialog={(type) => {
+                      console.log("showCreateDialog called:", type);
+                      setCreateType(type);
+                      setCreatePath(
+                        type === "file"
+                          ? "lib/fs.ts"
+                          : "lib",
+                      );
+                    }}
+                    onRename={(path) => {
+                      const name = path.split(/[/\\]/).pop() ?? "";
+                      setRenameTarget(path);
+                      setRenamePath(name);
+                    }}
+                    onDelete={(path) => {
+                      setDeleteTarget(path);
+                    }}
+                  />
                 )}
 
                 {sidebarView === "search" && (
@@ -499,26 +579,67 @@ export default function App() {
               }}
             />
             {tabToClose && (
-              <>
-                {console.log("Hello! There's a tabToClose")}
-                <Dialog
-                  title="You didn't save the file"
-                  message="Are you sure you wanna close the tab?"
-                  onCancel={() => {
-                    setTabToClose(null);
-                  }}
-                  onConfirm={() => {
-                    if (!tabToClose) return;
+              <Dialog
+                title="You didn't save the file"
+                message="Are you sure you wanna close the tab?"
+                onCancel={() => {
+                  setTabToClose(null);
+                }}
+                onConfirm={() => {
+                  if (!tabToClose) return;
 
-                    setTabs((prev) =>
-                      prev.filter((t) => t.id !== tabToClose.id),
-                    );
+                  setTabs((prev) => prev.filter((t) => t.id !== tabToClose.id));
 
-                    setTabToClose(null);
-                    console.log("I am really closed");
-                  }}
-                />
-              </>
+                  setTabToClose(null);
+                  console.log("I am really closed");
+                }}
+              />
+            )}
+            {/* Create File/Folder Dialog */}
+            {createType && (
+              <Dialog
+                title={createType === "file" ? "New File" : "New Folder"}
+                message={
+                  <input
+                    autoFocus
+                    value={createPath}
+                    onChange={(e) => setCreatePath(e.target.value)}
+                    placeholder={createType === "file" ? "lib/fs.rs" : "lib"}
+                    style={{ width: "100%" }}
+                  />
+                }
+                onCancel={() => {
+                  setCreateType(null);
+                  setCreatePath("");
+                }}
+                onConfirm={createItem}
+              />
+            )}
+            {renameTarget && (
+              <Dialog
+                title="Rename"
+                message={
+                  <input
+                    autoFocus
+                    value={renamePath}
+                    onChange={(e) => setRenamePath(e.target.value)}
+                    style={{ width: "100%" }}
+                  />
+                }
+                onCancel={() => {
+                  setRenameTarget(null);
+                  setRenamePath("");
+                }}
+                onConfirm={renameItem}
+              />
+            )}
+            {deleteTarget && (
+              <Dialog
+                title="Delete"
+                message={`Delete ${deleteTarget.split(/[/\\]/).pop()}?`}
+                onCancel={() => setDeleteTarget(null)}
+                onConfirm={deleteItem}
+              />
             )}
             {showAbout ? (
               <About onBack={() => setShowAbout(false)} />

@@ -1196,13 +1196,58 @@ body {
 }
 
 .sc-content {
-  margin: 5;
-}
-
-.settings-content {
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
+}
+
+.explorer-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.explorer-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.explorer-action-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.context-menu {
+  min-width: 180px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+
+  border-radius: 8px;
+  overflow: hidden;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.context-menu-item {
+  width: 100%;
+
+  border: none;
+  background: transparent;
+
+  color: var(--text);
+
+  text-align: left;
+
+  padding: 8px 12px;
+
+  cursor: pointer;
+}
+
+.context-menu-item:hover {
+  background: var(--surface-hover);
 }

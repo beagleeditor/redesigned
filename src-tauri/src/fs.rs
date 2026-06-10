@@ -110,3 +110,41 @@ pub fn read_file(path: String) -> Result<String, String> {
 pub fn write_file(path: String, content: String) -> Result<(), String> {
     fs::write(path, content).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn create_file(path: String) -> Result<(), String> {
+    use std::fs;
+    use std::path::Path;
+
+    let p = Path::new(&path);
+
+    if let Some(parent) = p.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    fs::File::create(p).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn create_dir(path: String) -> Result<(), String> {
+    std::fs::create_dir_all(path)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_path(path: String) -> Result<(), String> {
+    use std::fs;
+    use std::path::Path;
+
+    let p = Path::new(&path);
+
+    if p.is_dir() {
+        fs::remove_dir_all(p).map_err(|e| e.to_string())?;
+    } else {
+        fs::remove_file(p).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}

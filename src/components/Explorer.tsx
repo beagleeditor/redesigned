@@ -8,7 +8,13 @@ import { Icon } from "@iconify/react";
 
 type Props = {
   tree: FileNode | null;
-  onOpenFile: (path: string) => void;
+  onOpenFile: (path: string) => Promise<void>;
+  onReload: () => Promise<void>;
+  onNewFile: (path: string) => void;
+  onNewFolder: (path: string) => void;
+  showCreateDialog: (type: "file" | "folder") => void;
+  onRename?: (path: string) => void;
+  onDelete?: (path: string) => void;
 };
 
 /* -------------------------------------------------------
@@ -70,10 +76,68 @@ export function FileIcon({ name, isDir }: { name: string; isDir: boolean }) {
    MAIN EXPLORER
 ------------------------------------------------------- */
 
-export default function Explorer({ tree, onOpenFile }: Props) {
+export default function Explorer({
+  tree,
+  onOpenFile,
+  onReload,
+  onNewFile,
+  onNewFolder,
+  showCreateDialog,
+  onRename,
+  onDelete,
+}: Props) {
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    path: string;
+    isDir: boolean;
+  } | null>(null);
+
   return (
     <aside className="explorer">
-      <div className="explorer-title">EXPLORER</div>
+      <div className="explorer-title">
+        <span>EXPLORER</span>
+
+        <div className="explorer-actions">
+          <button
+            className="explorer-action-btn"
+            title="New File"
+            onClick={() => {
+              console.log("New File clicked");
+              showCreateDialog("file");
+            }}
+          >
+            <Icon
+              icon="mdi:file-plus-outline"
+              width="16"
+              style={{ color: "#fff" }}
+            />
+          </button>
+
+          <button
+            className="explorer-action-btn"
+            title="New Folder"
+            onClick={() => {
+              console.log("New Folder clicked");
+              showCreateDialog("folder");
+            }}
+          >
+            <Icon
+              icon="mdi:folder-plus-outline"
+              width="16"
+              style={{ color: "#fff" }}
+            />
+          </button>
+
+          <button
+            className="explorer-action-btn"
+            title="Reload"
+            onClick={() => onReload?.()}
+          >
+            <Icon icon="mdi:refresh" width="16" style={{ color: "#fff" }} />
+          </button>
+        </div>
+      </div>
 
       <div className="explorer-content">
         {!tree ? (
@@ -81,9 +145,71 @@ export default function Explorer({ tree, onOpenFile }: Props) {
             No folder opened
           </div>
         ) : (
-          <TreeNode node={tree} depth={0} onOpenFile={onOpenFile} />
+          <TreeNode
+            node={tree}
+            depth={0}
+            onOpenFile={onOpenFile}
+            onContextMenu={setContextMenu}
+          />
         )}
       </div>
+
+      {contextMenu && (
+        <div
+          className="context-menu"
+          style={{
+            position: "fixed",
+            left: contextMenu.x,
+            top: contextMenu.y,
+            zIndex: 10000,
+          }}
+          onMouseLeave={() => setContextMenu(null)}
+        >
+          {contextMenu.isDir && (
+            <>
+              <button
+                className="context-menu-item"
+                onClick={() => {
+                  showCreateDialog("file");
+                  setContextMenu(null);
+                }}
+              >
+                New File
+              </button>
+
+              <button
+                className="context-menu-item"
+                onClick={() => {
+                  showCreateDialog("folder");
+                  setContextMenu(null);
+                }}
+              >
+                New Folder
+              </button>
+            </>
+          )}
+
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              onRename?.(contextMenu.path);
+              setContextMenu(null);
+            }}
+          >
+            Rename
+          </button>
+
+          <button
+            className="context-menu-item"
+            onClick={() => {
+              onDelete?.(contextMenu.path);
+              setContextMenu(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
@@ -96,11 +222,18 @@ function TreeNode({
   node,
   depth,
   onOpenFile,
+  onContextMenu,
   defaultOpen = false,
 }: {
   node: FileNode;
   depth: number;
   onOpenFile: (path: string) => void;
+  onContextMenu: (menu: {
+    x: number;
+    y: number;
+    path: string;
+    isDir: boolean;
+  }) => void;
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -153,6 +286,15 @@ function TreeNode({
         className="file-item"
         style={{ paddingLeft: depth * 14 }}
         onClick={handleClick}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            path: node.path,
+            isDir: false,
+          });
+        }}
       >
         <FileIcon name={node.name} isDir={false} />
         <span>{node.name}</span>
@@ -170,6 +312,15 @@ function TreeNode({
         className="folder-item"
         style={{ paddingLeft: depth * 14 }}
         onClick={handleClick}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          onContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            path: node.path,
+            isDir: true,
+          });
+        }}
       >
         <Icon
           icon={
@@ -196,6 +347,7 @@ function TreeNode({
             node={child}
             depth={depth + 1}
             onOpenFile={onOpenFile}
+            onContextMenu={onContextMenu}
             defaultOpen={false}
           />
         ))}
